@@ -1,25 +1,30 @@
 import json
 import os
 import sys
+import boto3
+from decimal import Decimal
 
 # Añadir el path raíz para importar servicios
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from services.smoothing_algorithm import process_income_event
-from services.nessie_service import NessieService
+DYNAMODB_TABLE_TRANSACTIONS = os.environ.get("DYNAMODB_TABLE_TRANSACTIONS", "incomia-transactions-dev")
 
 def lambda_handler(event, context):
     """
-    Handler para procesamiento de ingresos.
-    Soporta POST para registro manual y GET para integración con Nessie.
+    Handler para procesamiento y listado de ingresos/transacciones.
+    Soporta POST para registro manual y GET para listar historial.
     """
     method = event.get('httpMethod') or event.get('requestContext', {}).get('http', {}).get('method')
     query_params = event.get('queryStringParameters') or {}
     user_id = query_params.get('userId') or query_params.get('user_id') or \
               event.get('requestContext', {}).get('authorizer', {}).get('jwt', {}).get('claims', {}).get('sub') or \
-              "test_user"
+              "USR-FD8F0536"
+
+    db = boto3.resource("dynamodb")
+    table = db.Table(DYNAMODB_TABLE_TRANSACTIONS)
 
     if method == 'POST':
+        from services.smoothing_algorithm import process_income_event
         try:
             body = json.loads(event.get('body', '{}'))
             amount = float(body.get('amount', 0))
@@ -29,29 +34,45 @@ def lambda_handler(event, context):
             return _response(400, {"error": str(e)})
 
     elif method == 'GET':
-        # Simulación con Nessie
         try:
-            nessie = NessieService()
-            # En un caso real, buscaríamos la account_id asociada al user_id
-            # Para la demo, usamos una account_id fija si no viene en query
-            account_id = event.get('queryStringParameters', {}).get('account_id', '64cfbe9096831d0339d67962')
+            # Consultamos las transacciones reales del usuario en DynamoDB
+            response = table.query(
+                KeyConditionExpression=boto3.dynamodb.conditions.Key('userId').eq(user_id),
+                Limit=50,
+                ScanIndexForward=False # Recientes primero
+            )
+            items = response.get('Items', [])
             
-            incomes = nessie.simulate_income_stream(account_id)
-            for inc in incomes:
-                 process_income_event(user_id, inc['amount'])
+            # Si no hay datos en DB, podemos intentar simulacion con Nessie (Opcional)
+            if not items and query_params.get('simulate') == 'true':
+                from services.nessie_service import NessieService
+                nessie = NessieService()
+                account_id = query_params.get('account_id', '64cfbe9096831d0339d67962')
+                items = nessie.simulate_income_stream(account_id)
             
-            return _response(200, {"message": f"Processed {len(incomes)} incomes from Nessie.", "incomes": incomes})
+            return _response(200, _decimal_to_float(items))
         except Exception as e:
             return _response(500, {"error": str(e)})
 
     return _response(405, {"error": "Method not allowed"})
+
+def _decimal_to_float(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, dict):
+        return {k: _decimal_to_float(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_decimal_to_float(i) for i in obj]
+    return obj
 
 def _response(status_code, body):
     return {
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type,Authorization"
         },
         "body": json.dumps(body, default=str)
     }

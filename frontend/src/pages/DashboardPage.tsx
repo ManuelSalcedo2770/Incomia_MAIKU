@@ -32,10 +32,29 @@ export function DashboardPage() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  if (isLoading || !summary) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-piggy border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] italic text-center space-y-4">
+        <div className="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center text-slate-400">
+          <Briefcase size={32} />
+        </div>
+        <div className="italic">
+          <h3 className="text-xl font-bold dark:text-white">No se detectó actividad financiera</h3>
+          <p className="text-slate-500 max-w-sm">
+            Para que la IA de Incomia comience a trabajar, necesitamos procesar su primer extracto de ingresos.
+          </p>
+        </div>
+        <Button onClick={() => fetchDashboardData()} variant="outline" className="italic font-bold">
+          Intentar Reconexión
+        </Button>
       </div>
     );
   }

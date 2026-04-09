@@ -27,16 +27,27 @@ def lambda_handler(event, context):
         item = response.get("Item")
         
         if not item:
-            return _response(404, {"error": "User financial state not found"})
+            # En lugar de 404, devolvemos un estado inicial seguro para que el Dashboard no se cuelgue
+            return _response(200, {
+                "userId": user_id,
+                "artificial_salary": 0,
+                "stabilization_fund": 0,
+                "resilience_indicator": 0,
+                "message": "Bienvenido a Incomia. Comience cargando sus depósitos."
+            })
             
         # Convertir Decimal a float para JSON
         result = _decimal_to_float(item)
         
+        # Soportamos ambos nombres de campos (transición de schema)
+        salary = result.get("current_artificial_salary") or result.get("artificial_salary") or 0
+        fund = result.get("stabilization_fund_balance") or 0
+        
         return _response(200, {
             "userId": result["userId"],
-            "artificial_salary": result.get("current_artificial_salary", 0),
-            "stabilization_fund": result.get("stabilization_fund_balance", 0),
-            "resilience_indicator": (result.get("stabilization_fund_balance", 0) / result.get("current_artificial_salary", 1)) if result.get("current_artificial_salary", 0) > 0 else 0
+            "artificial_salary": salary,
+            "stabilization_fund": fund,
+            "resilience_indicator": (fund / salary) if salary > 0 else 0
         })
     except Exception as e:
         return _response(500, {"error": str(e)})
