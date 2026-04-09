@@ -3,10 +3,12 @@ frontend:
   phases:
     preBuild:
       commands:
+        - echo "Iniciando build en frontend (Monorepo)..."
         - cd frontend
         - npm ci
     build:
       commands:
+        - echo "VITE_API_URL es $VITE_API_URL"
         - npm run build
   artifacts:
     baseDirectory: frontend/dist
