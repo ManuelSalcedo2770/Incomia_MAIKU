@@ -48,3 +48,27 @@ resource "aws_dynamodb_table" "transactions" {
     Environment = var.env
   }
 }
+
+# TABLA DE GASTOS -> Almacena gastos fijos/recurrentes de los usuarios
+resource "aws_dynamodb_table" "expenses" {
+  name         = "${var.project_name}-expenses-${var.env}"
+  billing_mode = "PAY_PER_REQUEST"
+  
+  # Estructura: userId (Hash) + expenseId (Range)
+  hash_key     = "userId"
+  range_key    = "expenseId"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+  attribute {
+    name = "expenseId"
+    type = "S"
+  }
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.env
+  }
+}

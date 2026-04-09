@@ -1,3 +1,4 @@
+import axios from 'axios';
 import type { 
   FinancialSummary, 
   SalaryConfig, 
@@ -5,130 +6,139 @@ import type {
   FinancialAdvice, 
   LiquidityPrediction 
 } from '../types';
-import { 
-  mockFinancialSummary, 
-  mockSalaryConfig, 
-  mockTransactions, 
-  mockFinancialAdvice, 
-  mockLiquidityPredictions 
-} from '../mocks/financialData';
 
 /**
  * FINANCIAL SERVICE - API BRIDGE LAYER
  * 
- * Esta capa es responsable de la comunicación con los servicios de AWS.
- * Actualmente utiliza Mocks pero está estructurada para recibir endpoints reales.
- * 
- * @author Incomia Frontend Team
- * @see AWS_INTEGRATION_GUIDE.md
+ * Conexión real con API Gateway de AWS.
  */
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://p70gn8n0wg.execute-api.us-east-1.amazonaws.com';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// ID de usuario real de la siembra (Desarrollador Freelance)
+const TEST_USER_ID = 'USR-FD8F0536';
 
 export const financialService = {
   /**
-   * Obtiene el resumen consolidado de finanzas y reserva de estabilidad.
-   * 
-   * @async
-   * @method GET
-   * @endpoint /api/v1/financial/summary
-   * @returns {Promise<FinancialSummary>} Objeto mapeado a la interfaz FinancialSummary.
-   * @integration_tip Implementar via AWS Lambda + API Gateway con cache de 5 minutos.
+   * Obtiene el resumen consolidado llamando al motor de smoothing.
    */
   getSummary: async (): Promise<FinancialSummary> => {
-    // TODO: Reemplazar con fetch/axios llamando a API Gateway
-    await delay(800);
-    return mockFinancialSummary;
+    try {
+      const resp = await api.get(`/smoothing?user_id=${TEST_USER_ID}`);
+      const data = resp.data;
+
+      return {
+        nextIncome: {
+          amount: data.artificial_salary,
+          date: new Date().toISOString().split('T')[0], // Hoy
+          description: 'Depósito Incomia Garantizado'
+        },
+        stabilityReserve: {
+          current: data.stabilization_fund,
+          target: data.artificial_salary * 1.5, // Arbitrario para demo
+          progress: data.resilience_indicator * 100,
+          message: data.resilience_indicator > 0.5 ? 'Fondo sólido' : 'Construyendo reserva'
+        },
+        recentTransactions: [] // Se podría poblar con /income
+      };
+    } catch (error) {
+      console.error('Error fetching summary:', error);
+      throw error;
+    }
   },
 
-  /**
-   * Obtiene la configuración actual del sueldo suavizado.
-   * 
-   * @async
-   * @method GET
-   * @endpoint /api/v1/salary/config
-   * @returns {Promise<SalaryConfig>} Configuración y métricas de confianza.
-   */
   getSalaryConfig: async (): Promise<SalaryConfig> => {
-    // TODO: Reemplazar con endpoint real
-    await delay(600);
-    return mockSalaryConfig;
+    try {
+      const resp = await api.get(`/smoothing?user_id=${TEST_USER_ID}`);
+      const data = resp.data;
+
+      return {
+        desiredAmount: data.artificial_salary,
+        frequency: 'biweekly',
+        recommendedAmount: data.artificial_salary * 1.1,
+        impact: 15.5,
+        confidence: 92
+      };
+    } catch (error) {
+      console.error('Error fetching salary config:', error);
+      throw error;
+    }
   },
 
-  /**
-   * Guarda los nuevos parámetros de estabilización (sueldo deseado).
-   * El algoritmo debe recalcular el fondo de reserva tras esta operación.
-   * 
-   * @async
-   * @method POST
-   * @endpoint /api/v1/salary/config
-   * @param {Partial<SalaryConfig>} config - Objeto parcial con los cambios (ej. { desiredAmount: 4000 }).
-   * @returns {Promise<SalaryConfig>} La configuración actualizada y confirmada.
-   */
   updateSalaryConfig: async (config: Partial<SalaryConfig>): Promise<SalaryConfig> => {
-    // TODO: Invocar Lambda de procesamiento que dispare el motor de riesgos
-    await delay(1000);
-    console.log('[AWS Integration] Invoke UpdateSalaryLambda', config);
-    return { ...mockSalaryConfig, ...config };
+    // Simulado para demo: En producción llamaría a un endpoint de settings
+    return {
+      desiredAmount: config.desiredAmount || 0,
+      frequency: config.frequency || 'biweekly',
+      recommendedAmount: (config.desiredAmount || 0) * 1.1,
+      impact: 15.5,
+      confidence: 92
+    };
   },
 
-  /**
-   * Obtiene la lista completa de transacciones analizadas.
-   * 
-   * @async
-   * @method GET
-   * @endpoint /api/v1/transactions
-   * @returns {Promise<Transaction[]>} Array de transacciones pre-suavizado.
-   */
   getTransactions: async (): Promise<Transaction[]> => {
-    // TODO: Conectar a DynamoDB o fuente de datos bancaria
-    await delay(700);
-    return mockTransactions;
+    try {
+      const resp = await api.get(`/income?account_id=64cfbe9096831d0339d67962`);
+      // Mapear transacciones de Nessie a formato Incomia
+      return (resp.data.incomes || []).map((inc: any, idx: number) => ({
+        id: `txn-${idx}`,
+        date: inc.date || new Date().toISOString(),
+        source: 'Capital One (Nessie)',
+        category: 'Income',
+        amount: inc.amount,
+        status: 'processed',
+        type: 'income'
+      }));
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
   },
 
-  /**
-   * Obtiene consejos financieros inteligentes generados en base al perfil del usuario.
-   * 
-   * @async
-   * @method GET
-   * @endpoint /api/v1/ai/advice
-   * @returns {Promise<FinancialAdvice[]>} Sugerencias dinámicas.
-   * @integration_tip Esta llamada debe triggerear un prompt a Amazon Bedrock (Claude 3.5 Sonnet sugerido).
-   */
   getFinancialAdvice: async (): Promise<FinancialAdvice[]> => {
-    // TODO: Integrar con streaming de Bedrock para mejor UX
-    await delay(1200);
-    return mockFinancialAdvice;
+    try {
+      const resp = await api.get(`/advice?user_id=${TEST_USER_ID}`);
+      return [{
+        id: 'advice-1',
+        title: 'Consejo de Nova Pro',
+        content: resp.data.advice,
+        type: 'saving',
+        date: new Date().toLocaleDateString(),
+        impact: 'Alto'
+      }];
+    } catch (error) {
+      console.error('Error fetching advice:', error);
+      return [];
+    }
   },
 
-  /**
-   * Obtiene las predicciones de liquidez futuras generadas por el modelo ML.
-   * 
-   * @async
-   * @method GET
-   * @endpoint /api/v1/ai/predictions
-   * @returns {Promise<LiquidityPrediction[]>} Series de tiempo con niveles de riesgo.
-   */
   getPredictions: async (): Promise<LiquidityPrediction[]> => {
-    // TODO: Integrar con SageMaker o lógica de predicción custom
-    await delay(900);
-    return mockLiquidityPredictions;
+    try {
+      const resp = await api.get(`/predictions?user_id=${TEST_USER_ID}`);
+      const data = resp.data;
+      
+      // Adaptar el resultado del motor de predicción
+      return [{
+        date: 'Próximos 14 días',
+        probability: data.prediction?.bankruptcy_probability * 100 || 5,
+        expectedBalance: data.prediction?.final_projected_balance || 0,
+        riskLevel: data.prediction?.new_risk_score > 70 ? 'high' : 'low'
+      }];
+    } catch (error) {
+      console.error('Error fetching predictions:', error);
+      return [];
+    }
   },
 
-  /**
-   * Realiza la carga de datos históricos para entrenamiento del algoritmo de suavizado.
-   * 
-   * @async
-   * @method POST
-   * @endpoint /api/v1/data/train
-   * @param {File} file - El extracto bancario o CSV de ingresos.
-   * @returns {Promise<{ success: boolean; dataPoints: number }>} Confirmación de puntos procesados.
-   * @integration_tip Usar AWS S3 Pre-signed URLs para subir el archivo directamente desde el cliente.
-   */
   uploadData: async (file: File): Promise<{ success: boolean; dataPoints: number }> => {
-    // TODO: Implementar flujo S3 para escalabilidad
-    await delay(2000);
-    console.log('[AWS Integration] S3 Uploading:', file.name);
+    console.log('[AWS Integration] S3 Uploading simulation:', file.name);
     return { success: true, dataPoints: 1284 };
   }
 };

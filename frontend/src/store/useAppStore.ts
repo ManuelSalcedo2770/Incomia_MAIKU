@@ -11,7 +11,6 @@ import type {
   LiquidityPrediction
 } from '../types';
 import { financialService } from '../services/financialService';
-import { mockAppSettings, mockCashFlowHistory, mockExpenses, mockSavingGoals } from '../mocks/financialData';
 
 /**
  * STATE MANAGEMENT - GLOBAL APP STORE
@@ -49,19 +48,28 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   user: {
-    id: 'user-1',
+    id: 'USR-FD8F0536',
     name: 'Roberto Domínguez',
-    email: 'roberto.d@incomia.ai',
+    email: 'dev_freelance@incomia.mx',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Roberto',
   },
   summary: null,
   salaryConfig: null,
-  savingGoals: mockSavingGoals,
-  cashFlowHistory: mockCashFlowHistory,
-  expenses: mockExpenses,
+  savingGoals: [],
+  cashFlowHistory: [],
+  expenses: [],
   advice: [],
   predictions: [],
-  settings: mockAppSettings,
+  settings: {
+    theme: 'dark',
+    notifications: {
+      deposits: true,
+      expenses: true
+    },
+    currency: 'MXN',
+    language: 'es',
+    aiAggressiveness: 'balanceado'
+  },
   isLoading: false,
   error: null,
 

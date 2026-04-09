@@ -14,7 +14,10 @@ def lambda_handler(event, context):
     Soporta POST para registro manual y GET para integración con Nessie.
     """
     method = event.get('httpMethod') or event.get('requestContext', {}).get('http', {}).get('method')
-    user_id = event.get('requestContext', {}).get('authorizer', {}).get('jwt', {}).get('claims', {}).get('sub') or "test_user"
+    query_params = event.get('queryStringParameters') or {}
+    user_id = query_params.get('userId') or query_params.get('user_id') or \
+              event.get('requestContext', {}).get('authorizer', {}).get('jwt', {}).get('claims', {}).get('sub') or \
+              "test_user"
 
     if method == 'POST':
         try:

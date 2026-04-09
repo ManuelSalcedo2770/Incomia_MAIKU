@@ -323,15 +323,28 @@ def invoke_bedrock(
             retries={"max_attempts": 1, "mode": "standard"},
         )
         client = boto3.client(service_name="bedrock-runtime", config=cfg)
-        logger.info(f"Invocando Bedrock modelo={BEDROCK_MODEL_ID} user={user.get('user_id')}")
+        logger.info(f"Invocando Bedrock (Converse API) modelo={BEDROCK_MODEL_ID} user={user.get('user_id')}")
 
-        response = client.invoke_model(
-            modelId=BEDROCK_MODEL_ID, contentType="application/json",
-            accept="application/json", body=json.dumps(request_body),
+        # Estructura para Converse API (Limpia y Estándar)
+        messages = [
+            {"role": "user", "content": [{"text": user_prompt}]}
+        ]
+        system = [{"text": SYSTEM_PROMPT}]
+        inference_config = {
+            "maxTokens": BEDROCK_MAX_TOKENS,
+            "temperature": BEDROCK_TEMPERATURE,
+            "topP": 0.9
+        }
+
+        response = client.converse(
+            modelId=BEDROCK_MODEL_ID,
+            messages=messages,
+            system=system,
+            inferenceConfig=inference_config
         )
-        resp_body = json.loads(response["body"].read())
-        # Amazon Nova schema: output > message > content > text
-        advice = resp_body.get("output", {}).get("message", {}).get("content", [{}])[0].get("text", "")
+
+        advice = response["output"]["message"]["content"][0]["text"]
+        usage = response.get("usage", {})
 
         _circuit_breaker.record_success()
 
@@ -339,11 +352,11 @@ def invoke_bedrock(
             "statusCode": 200,
             "advice": advice,
             "metadata": {
-                "source": "bedrock_amazon_nova_pro",
+                "source": f"bedrock_{BEDROCK_MODEL_ID}",
                 "model_id": BEDROCK_MODEL_ID,
                 "user_id": user.get("user_id"),
-                "input_tokens": resp_body.get("usage", {}).get("input_tokens"),
-                "output_tokens": resp_body.get("usage", {}).get("output_tokens"),
+                "input_tokens": usage.get("inputTokens"),
+                "output_tokens": usage.get("outputTokens"),
                 "circuit_breaker": _circuit_breaker.get_status(),
                 "timestamp": datetime.utcnow().isoformat(),
             },
@@ -590,6 +603,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
 
         # Caso 2/3: API Gateway o invocacion directa
+        query_params = event.get('queryStringParameters') or {}
         body = event
         if isinstance(event.get("body"), str):
             body = json.loads(event["body"])
@@ -597,8 +611,17 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body = event["body"]
 
         user = body.get("user", {})
-        txns = body.get("recent_transactions", [])
-        exps = body.get("upcoming_expenses", [])
+        user_id = query_params.get("userId") or query_params.get("user_id") or user.get("user_id")
+        
+        # Si tenemos un user_id pero no el perfil completo, intentar leer de DynamoDB
+        if user_id and not user.get("primary_sector"):
+            try:
+                user, txns, exps = _fetch_user_data(user_id)
+            except Exception as e:
+                logger.error(f"Error fetching detail for {user_id}: {e}")
+        
+        txns = body.get("recent_transactions", []) if not user_id else txns
+        exps = body.get("upcoming_expenses", []) if not user_id else exps
         forecast = body.get("forecast")
 
         # Validar

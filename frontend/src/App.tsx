@@ -10,6 +10,7 @@ import { SavingsPage } from './pages/SavingsPage';
 import { CashFlowPage } from './pages/CashFlowPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { BankingLandingPage } from './pages/BankingLandingPage';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
 
 function App() {
@@ -23,9 +24,11 @@ function App() {
         </Route>
 
         {/* Main Protected Routes */}
+        <Route path="/" element={<BankingLandingPage />} />
+        
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/salary" element={<SalaryConfigPage />} />
             <Route path="/cashflow" element={<CashFlowPage />} />
             <Route path="/deposits" element={<DataTrainingPage />} />
@@ -35,7 +38,7 @@ function App() {
           </Route>
         </Route>
         
-        {/* Missing routes redirect to Dashboard */}
+        {/* Missing routes redirect to Home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

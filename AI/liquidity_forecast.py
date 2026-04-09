@@ -580,7 +580,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Caso 2: API Gateway
         path_params = event.get("pathParameters") or {}
         query_params = event.get("queryStringParameters") or {}
-        user_id = path_params.get("user_id") or query_params.get("user_id")
+        user_id = path_params.get("user_id") or query_params.get("user_id") or \
+                  path_params.get("userId") or query_params.get("userId")
 
         if user_id:
             user, txns, exps = _fetch_user_data(user_id)

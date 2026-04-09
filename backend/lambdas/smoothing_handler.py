@@ -13,7 +13,11 @@ def lambda_handler(event, context):
     """
     Retorna el estado actual del smoothing para el usuario.
     """
-    user_id = event.get('requestContext', {}).get('authorizer', {}).get('jwt', {}).get('claims', {}).get('sub') or "test_user"
+    # Prioridad: Query parameter (para simulación) > Authorizer (para producción)
+    query_params = event.get('queryStringParameters') or {}
+    user_id = query_params.get('userId') or query_params.get('user_id') or \
+              event.get('requestContext', {}).get('authorizer', {}).get('jwt', {}).get('claims', {}).get('sub') or \
+              "test_user"
     
     db = boto3.resource("dynamodb")
     table = db.Table(DYNAMODB_TABLE_USERS)

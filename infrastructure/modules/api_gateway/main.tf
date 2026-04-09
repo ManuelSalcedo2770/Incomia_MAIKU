@@ -82,8 +82,6 @@ resource "aws_apigatewayv2_route" "post_income" {
   route_key = "POST /income"
   target    = "integrations/${aws_apigatewayv2_integration.income.id}"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
 resource "aws_apigatewayv2_route" "get_income" {
@@ -91,8 +89,6 @@ resource "aws_apigatewayv2_route" "get_income" {
   route_key = "GET /income"
   target    = "integrations/${aws_apigatewayv2_integration.income.id}"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
 resource "aws_apigatewayv2_route" "get_smoothing" {
@@ -100,8 +96,6 @@ resource "aws_apigatewayv2_route" "get_smoothing" {
   route_key = "GET /smoothing"
   target    = "integrations/${aws_apigatewayv2_integration.smoothing.id}"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
 resource "aws_apigatewayv2_route" "get_predictions" {
@@ -109,8 +103,6 @@ resource "aws_apigatewayv2_route" "get_predictions" {
   route_key = "GET /predictions"
   target    = "integrations/${aws_apigatewayv2_integration.prediction.id}"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
 resource "aws_apigatewayv2_route" "get_advice" {
@@ -118,6 +110,4 @@ resource "aws_apigatewayv2_route" "get_advice" {
   route_key = "GET /advice"
   target    = "integrations/${aws_apigatewayv2_integration.advice.id}"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
