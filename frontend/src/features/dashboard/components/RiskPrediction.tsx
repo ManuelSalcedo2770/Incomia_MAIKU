@@ -33,7 +33,7 @@ export function RiskPrediction({ predictions, className }: RiskPredictionProps) 
           </div>
           <div className={cn(
             "w-12 h-12 rounded-2xl flex items-center justify-center italic",
-            latest.riskLevel === 'low' ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-500 dark:text-emerald-400" :
+            latest.riskLevel === 'low' ? "bg-piggy/10 dark:bg-piggy/20 text-piggy dark:text-piggy-light" :
               latest.riskLevel === 'medium' ? "bg-amber-50 dark:bg-amber-500/20 text-amber-500 dark:text-amber-400" :
                 "bg-red-50 dark:bg-red-500/20 text-red-500 dark:text-red-400"
           )}>
@@ -49,7 +49,7 @@ export function RiskPrediction({ predictions, className }: RiskPredictionProps) 
               <span>Riesgo Proyectado</span>
               <span className={cn(
                 "font-bold",
-                latest.riskLevel === 'low' ? "text-emerald-600 dark:text-emerald-400" :
+                latest.riskLevel === 'low' ? "text-piggy-dark dark:text-piggy-light" :
                   latest.riskLevel === 'medium' ? "text-amber-600 dark:text-amber-400" :
                     "text-red-600 dark:text-red-400"
               )}>
@@ -62,7 +62,7 @@ export function RiskPrediction({ predictions, className }: RiskPredictionProps) 
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-1000 ease-out",
-                  latest.riskLevel === 'low' ? "bg-emerald-500" :
+                  latest.riskLevel === 'low' ? "bg-piggy" :
                     latest.riskLevel === 'medium' ? "bg-amber-500" :
                       "bg-red-500"
                 )}

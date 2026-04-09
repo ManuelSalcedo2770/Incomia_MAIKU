@@ -9,10 +9,11 @@
     --white: #ffffff;
     --font-family: 'Roboto', Arial, sans-serif;
 
-    /* INCOMIA Plugin Theme */
-    --incomia-g1: #f480f6;
-    --incomia-g2: #bdb255;
-    --incomia-glow: rgba(155, 81, 224, 0.4);
+    /* INCOMIA Plugin Theme - Metal & Piggy Bank */
+    --incomia-g1: #D4AF37; /* Gold */
+    --incomia-g2: #FF99AA; /* Piggy Pink */
+    --incomia-glow: rgba(212, 175, 55, 0.4); /* Gold Glow */
+    --incomia-text: #050505;
 }
 
 * {

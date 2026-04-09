@@ -18,7 +18,7 @@ export function FinancialAdvice({ advice, className }: FinancialAdviceProps) {
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center gap-2 mb-2">
-        <Sparkles className="text-emerald-500" size={20} />
+        <Sparkles className="text-piggy" size={20} />
         <h3 className="font-display font-bold text-primary dark:text-white italic">Recomendaciones de IA Incomia</h3>
       </div>
       
@@ -28,7 +28,7 @@ export function FinancialAdvice({ advice, className }: FinancialAdviceProps) {
             key={item.id} 
             className={cn(
               "p-5 border-l-4 transition-all hover:translate-x-1",
-              item.type === 'opportunity' ? "border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/10" : 
+              item.type === 'opportunity' ? "border-piggy bg-piggy/10/30 dark:bg-emerald-950/10" : 
               item.type === 'warning' ? "border-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : 
               "border-blue-500 bg-blue-50/30 dark:bg-blue-950/10"
             )}
@@ -36,7 +36,7 @@ export function FinancialAdvice({ advice, className }: FinancialAdviceProps) {
             <div className="flex gap-4">
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                item.type === 'opportunity' ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : 
+                item.type === 'opportunity' ? "bg-emerald-100 dark:bg-piggy/20 text-piggy-dark dark:text-piggy-light" : 
                 item.type === 'warning' ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" : 
                 "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
               )}>
@@ -55,7 +55,7 @@ export function FinancialAdvice({ advice, className }: FinancialAdviceProps) {
                 </p>
                 {item.impact && (
                   <div className="pt-2">
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/20 px-2 py-0.5 rounded-full uppercase italic">
+                    <span className="text-[10px] font-bold text-piggy-dark dark:text-piggy-light bg-emerald-100 dark:bg-piggy/20 px-2 py-0.5 rounded-full uppercase italic">
                       Impacto: {item.impact}
                     </span>
                   </div>

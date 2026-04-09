@@ -9,25 +9,23 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#0D1627',
-          light: '#1E293B',
-          dark: '#020617',
+          DEFAULT: '#050505', // Deep Black
+          light: '#1A1A1A',
+          dark: '#000000',
         },
-        emerald: {
-          50: '#ECFDF5',
-          100: '#D1FAE5',
-          200: '#A7F3D0',
-          300: '#6EE7B7',
-          400: '#34D399',
-          500: '#10B981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065F46',
-          900: '#064E3B',
+        piggy: {
+          DEFAULT: '#FF99AA', // Piggy Bank Pink
+          light: '#FFB3C1',
+          dark: '#E07A8A',
+        },
+        metal: {
+          gold: '#D4AF37',
+          silver: '#C0C0C0',
+          copper: '#B87333',
         },
         accent: {
-          DEFAULT: '#10B981',
-          foreground: '#FFFFFF',
+          DEFAULT: '#FF99AA', // Defaults to Piggy Pink
+          foreground: '#050505',
         }
       },
       fontFamily: {

@@ -21,7 +21,11 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 dark:bg-primary/50 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-premium rounded-2xl;
+    @apply bg-white/80 dark:bg-primary-light/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-premium rounded-2xl;
+  }
+
+  .metal-border {
+    @apply border border-metal-gold/30 dark:border-metal-gold/20;
   }
 
   .premium-transition {
