@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Upload, 
   FileSpreadsheet, 
@@ -20,9 +20,17 @@ import { cn } from '../utils/cn';
 import { useCurrency } from '../hooks/useCurrency';
 
 export function DataTrainingPage() {
-  const { summary } = useAppStore();
+  const { summary, fetchDashboardData } = useAppStore();
   const [isUploading, setIsUploading] = useState(false);
   const { format } = useCurrency();
+  const [depositDate, setDepositDate] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositSource, setDepositSource] = useState('Transferencia Directa');
+  const [depositStatus, setDepositStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    if (!summary) fetchDashboardData();
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,11 +39,32 @@ export function DataTrainingPage() {
     setIsUploading(true);
     try {
       await financialService.uploadData(file);
-      // In a real app, we would refresh the data here
     } catch (error) {
       console.error('Upload failed', error);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleAddDeposit = async () => {
+    if (!depositAmount || Number(depositAmount) <= 0) return;
+    setDepositStatus('loading');
+    try {
+      await financialService.addDeposit({
+        amount: Number(depositAmount),
+        date: depositDate || new Date().toISOString().split('T')[0],
+        source: depositSource,
+      });
+      setDepositStatus('success');
+      setDepositAmount('');
+      setDepositDate('');
+      // Refrescar datos del dashboard
+      fetchDashboardData();
+      setTimeout(() => setDepositStatus('idle'), 3000);
+    } catch (error) {
+      console.error('Error adding deposit:', error);
+      setDepositStatus('error');
+      setTimeout(() => setDepositStatus('idle'), 3000);
     }
   };
 
@@ -93,18 +122,20 @@ export function DataTrainingPage() {
             </h4>
             <Card className="p-8 italic border-slate-100 dark:border-white/5">
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 items-end italic">
-                <Input label="Fecha Factura" type="date" className="h-12 bg-slate-50 dark:bg-white/5 border-none italic" />
-                <Input label="Monto" placeholder="0.00" className="h-12 bg-slate-50 dark:bg-white/5 border-none italic" />
+                <Input label="Fecha Factura" type="date" className="h-12 bg-slate-50 dark:bg-white/5 border-none italic" value={depositDate} onChange={(e: any) => setDepositDate(e.target.value)} />
+                <Input label="Monto" placeholder="0.00" type="number" className="h-12 bg-slate-50 dark:bg-white/5 border-none italic" value={depositAmount} onChange={(e: any) => setDepositAmount(e.target.value)} />
                 <div className="space-y-2 italic">
                   <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">Proveedor / Origen</label>
-                  <select className="w-full h-12 bg-slate-50 dark:bg-white/5 border-none rounded-xl px-4 text-sm font-bold text-primary dark:text-white focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-500/20 italic outline-none">
+                  <select className="w-full h-12 bg-slate-50 dark:bg-white/5 border-none rounded-xl px-4 text-sm font-bold text-primary dark:text-white focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-500/20 italic outline-none" value={depositSource} onChange={(e) => setDepositSource(e.target.value)}>
                     <option className="dark:bg-slate-900">Stripe Payments</option>
                     <option className="dark:bg-slate-900">PayPal Freelance</option>
                     <option className="dark:bg-slate-900">Transferencia Directa</option>
                     <option className="dark:bg-slate-900">Efectivo / Otros</option>
                   </select>
                 </div>
-                <Button className="h-12 shadow-lg dark:shadow-none italic">Añadir Registro</Button>
+                <Button onClick={handleAddDeposit} disabled={depositStatus === 'loading' || !depositAmount} className="h-12 shadow-lg dark:shadow-none italic">
+                  {depositStatus === 'loading' ? 'Registrando...' : depositStatus === 'success' ? '✓ Registrado' : 'Añadir Registro'}
+                </Button>
               </div>
             </Card>
           </div>

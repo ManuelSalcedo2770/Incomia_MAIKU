@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   Zap,
   Sparkles,
@@ -21,8 +22,14 @@ import { Button } from '../components/ui/Button';
 import { cn } from '../utils/cn';
 
 export function CashFlowPage() {
-  const { cashFlowHistory } = useAppStore();
+  const { cashFlowHistory, fetchDashboardData } = useAppStore();
   const { format } = useCurrency();
+
+  useEffect(() => {
+    if (cashFlowHistory.length === 0) {
+      fetchDashboardData();
+    }
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">

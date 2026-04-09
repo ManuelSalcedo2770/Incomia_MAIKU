@@ -24,12 +24,31 @@ def lambda_handler(event, context):
     table = db.Table(DYNAMODB_TABLE_TRANSACTIONS)
 
     if method == 'POST':
-        from services.smoothing_algorithm import process_income_event
         try:
             body = json.loads(event.get('body', '{}'))
             amount = float(body.get('amount', 0))
-            result = process_income_event(user_id, amount)
-            return _response(200, result)
+            
+            if amount <= 0:
+                return _response(400, {"error": "Amount must be positive"})
+            
+            # Intentar usar el algoritmo de suavizado
+            try:
+                from smoothing_algorithm import process_income_event
+                result = process_income_event(user_id, amount)
+                return _response(200, result)
+            except ImportError:
+                # Fallback: guardar la transacción directamente
+                import uuid
+                from datetime import datetime
+                table.put_item(Item={
+                    "userId": user_id,
+                    "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "amount": Decimal(str(amount)),
+                    "type": "ingreso",
+                    "description": body.get('description', 'Depósito manual')
+                })
+                return _response(201, {"message": "Deposit recorded", "amount": amount})
         except Exception as e:
             return _response(400, {"error": str(e)})
 

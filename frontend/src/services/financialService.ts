@@ -143,6 +143,21 @@ export const financialService = {
     return { success: true, dataPoints: 1284 };
   },
 
+  addDeposit: async (deposit: { amount: number; date: string; source: string }): Promise<any> => {
+    try {
+      const resp = await api.post(`/income?user_id=${TEST_USER_ID}`, {
+        amount: deposit.amount,
+        description: deposit.source,
+        date: deposit.date,
+        type: 'ingreso'
+      });
+      return resp.data;
+    } catch (error) {
+      console.error('Error adding deposit:', error);
+      throw error;
+    }
+  },
+
   // --- GESTIÓN DE GASTOS (CONEXIÓN REAL API) ---
   getExpenses: async (): Promise<any[]> => {
     try {
