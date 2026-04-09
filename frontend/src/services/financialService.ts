@@ -13,7 +13,7 @@ import type {
  * Conexión real con API Gateway de AWS.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://p70gn8n0wg.execute-api.us-east-1.amazonaws.com';
+const API_BASE_URL = 'https://p70gn8n0wg.execute-api.us-east-1.amazonaws.com/prod';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
