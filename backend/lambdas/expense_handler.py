@@ -26,11 +26,17 @@ def lambda_handler(event, context):
         try:
             # En un entorno real usaríamos un Index (GSI) o Query por userId
             # Por simplicidad para la demo usamos Scan con filtro (No recomendado para prod)
-            response = table.scan(
-                FilterExpression="userId = :uid",
-                ExpressionAttributeValues={":uid": user_id}
-            )
-            items = response.get('Items', [])
+            try:
+                response = table.scan(
+                    FilterExpression="userId = :uid",
+                    ExpressionAttributeValues={":uid": user_id}
+                )
+                items = response.get('Items', [])
+            except Exception as e:
+                # Si la tabla no existe aún, devolvemos lista vacía en lugar de fallar
+                if 'ResourceNotFoundException' in str(e):
+                    return _response(200, [])
+                raise e
             return _response(200, items)
         except Exception as e:
             return _response(500, {"error": str(e)})

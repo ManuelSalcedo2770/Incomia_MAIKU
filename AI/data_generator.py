@@ -62,9 +62,9 @@ if not logger.handlers:
 # CONFIGURACION VIA VARIABLES DE ENTORNO
 # ════════════════════════════════════════════════════════════
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
-DYNAMODB_TABLE_USERS = os.environ.get("DYNAMODB_TABLE_USERS", "incomia_users")
-DYNAMODB_TABLE_TRANSACTIONS = os.environ.get("DYNAMODB_TABLE_TRANSACTIONS", "incomia_transactions")
-DYNAMODB_TABLE_EXPENSES = os.environ.get("DYNAMODB_TABLE_EXPENSES", "incomia_expenses")
+DYNAMODB_TABLE_USERS = os.environ.get("DYNAMODB_TABLE_USERS", "incomia-users-dev")
+DYNAMODB_TABLE_TRANSACTIONS = os.environ.get("DYNAMODB_TABLE_TRANSACTIONS", "incomia-transactions-dev")
+DYNAMODB_TABLE_EXPENSES = os.environ.get("DYNAMODB_TABLE_EXPENSES", "incomia-expenses-dev")
 EVENTBRIDGE_BUS = os.environ.get("EVENTBRIDGE_BUS_NAME", "incomia-events")
 EVENTBRIDGE_SRC = os.environ.get("EVENTBRIDGE_SOURCE", "incomia.data-generator")
 S3_BUCKET = os.environ.get("S3_BUCKET", "incomia-data-lake")
@@ -248,7 +248,7 @@ def _gen_musician_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         tip = random.uniform(100.0, 800.0) if random.random() < 0.35 else 0.0
         ts = date.replace(hour=random.randint(18, 23), minute=random.randint(0, 59), second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt + tip, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": "Evento_Privado",
@@ -265,7 +265,7 @@ def _gen_musician_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         tip = random.uniform(80.0, 400.0) if random.random() < 0.40 else 0.0
         ts = date.replace(hour=random.randint(20, 23), minute=random.randint(0, 59), second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt + tip, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": "Bar_Restaurante",
@@ -280,7 +280,7 @@ def _gen_musician_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         amt = n * random.uniform(250.0, 500.0) * INF
         ts = date.replace(hour=random.randint(10, 18), minute=0, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": "Clases_Musica",
@@ -321,7 +321,7 @@ def _gen_uber_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
     if tip > 0: desc += f" + propinas ${tip:.0f}"
 
     txns.append({
-        "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+        "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
         "userId": uid, "timestamp": ts.isoformat(),
         "amount": round(total + tip, 2), "currency": CURRENCY,
         "type": "ingreso", "income_source": plat,
@@ -350,7 +350,7 @@ def _gen_plumber_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         amt = random.uniform(300.0, 900.0) * INF
         ts = date.replace(hour=random.randint(8, 18), minute=random.randint(0, 59), second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": "Servicio_Domicilio",
@@ -363,7 +363,7 @@ def _gen_plumber_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         amt = random.uniform(1500.0, 4500.0) * INF
         ts = date.replace(hour=10, minute=0, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": "Proyecto_Grande",
@@ -389,7 +389,7 @@ def _gen_dev_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         plat = random.choice(["Upwork", "Toptal", "Cliente_Directo"])
         ts = date.replace(hour=10, minute=0, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": plat,
@@ -402,7 +402,7 @@ def _gen_dev_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         amt = random.uniform(12000.0, 30000.0) * INF
         ts = date.replace(hour=14, minute=30, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": "Cliente_Directo",
@@ -417,7 +417,7 @@ def _gen_dev_income(date: datetime, uid: str) -> List[Dict[str, Any]]:
         amt = hrs * rate * INF
         ts = date.replace(hour=18, minute=0, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(amt, 2), "currency": CURRENCY,
             "type": "ingreso", "income_source": "Freelance_Platform",
@@ -447,7 +447,7 @@ def _gen_var_expenses(date: datetime, uid: str, sub: str) -> List[Dict[str, Any]
         amt = random.uniform(60.0, 380.0) * INF
         ts = date.replace(hour=random.randint(7, 21), minute=random.randint(0, 59), second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(-amt, 2), "currency": CURRENCY,
             "type": "gasto_variable", "income_source": "",
@@ -463,7 +463,7 @@ def _gen_var_expenses(date: datetime, uid: str, sub: str) -> List[Dict[str, Any]
         amt = random.uniform(25.0, 200.0) * INF
         ts = date.replace(hour=random.randint(6, 22), minute=random.randint(0, 59), second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(-amt, 2), "currency": CURRENCY,
             "type": "gasto_variable", "income_source": "",
@@ -476,7 +476,7 @@ def _gen_var_expenses(date: datetime, uid: str, sub: str) -> List[Dict[str, Any]
         amt = random.uniform(50.0, 450.0) * INF
         ts = date.replace(hour=random.randint(14, 23), minute=random.randint(0, 59), second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(-amt, 2), "currency": CURRENCY,
             "type": "gasto_variable", "income_source": "",
@@ -491,7 +491,7 @@ def _gen_var_expenses(date: datetime, uid: str, sub: str) -> List[Dict[str, Any]
         amt = random.uniform(50.0, 180.0) * INF
         ts = date.replace(hour=random.randint(7, 20), minute=0, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(-amt, 2), "currency": CURRENCY,
             "type": "gasto_variable", "income_source": "",
@@ -502,7 +502,7 @@ def _gen_var_expenses(date: datetime, uid: str, sub: str) -> List[Dict[str, Any]
         amt = random.uniform(100.0, 600.0) * INF
         ts = date.replace(hour=random.randint(7, 12), minute=0, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(-amt, 2), "currency": CURRENCY,
             "type": "gasto_variable", "income_source": "",
@@ -515,7 +515,7 @@ def _gen_var_expenses(date: datetime, uid: str, sub: str) -> List[Dict[str, Any]
         amt = random.uniform(80.0, 400.0) * INF
         ts = date.replace(hour=random.randint(10, 18), minute=0, second=0)
         txns.append({
-            "transaction_id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+            "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}",
             "userId": uid, "timestamp": ts.isoformat(),
             "amount": round(-amt, 2), "currency": CURRENCY,
             "type": "gasto_variable", "income_source": "",
