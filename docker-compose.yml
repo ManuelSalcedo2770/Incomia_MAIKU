@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NESSIE_API_KEY=${NESSIE_API_KEY:-MOCK_KEY}
+      - AWS_REGION=us-east-1
+      - DYNAMODB_TABLE_USERS=incomia-users-dev
+      - DYNAMODB_TABLE_TRANSACTIONS=incomia-transactions-dev
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000

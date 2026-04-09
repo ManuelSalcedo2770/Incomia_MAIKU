@@ -1,94 +1,116 @@
-from sqlalchemy.orm import Session
-from models.domain import FinancialState, Transaction
+import os
+import boto3
+from datetime import datetime
+from decimal import Decimal
+import logging
+
+logger = logging.getLogger("incomia.smoothing")
 
 # Configuraciones del algoritmo de resiliencia
 SAFETY_FACTOR = 0.8 # Para ser conservadores iniciales y no sobreestimar (80%)
 RESILIENCE_MONTHS = 3 # M = Número de meses de colchón financiero
 MIN_SALARY_THRESHOLD = 200.0 # Umbral mínimo de vida configurable
 
-def process_income_event(db: Session, user_id: int, amount: float) -> dict:
-    # O(1) tiempo de ejecución obteniendo estado actual
-    financial_state = db.query(FinancialState).filter(FinancialState.user_id == user_id).first()
+DYNAMODB_TABLE_USERS = os.environ.get("DYNAMODB_TABLE_USERS", "incomia-users-dev")
+DYNAMODB_TABLE_TRANSACTIONS = os.environ.get("DYNAMODB_TABLE_TRANSACTIONS", "incomia-transactions-dev")
+
+def _get_db():
+    return boto3.resource("dynamodb")
+
+def _decimal_to_float(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, dict):
+        return {k: _decimal_to_float(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_decimal_to_float(i) for i in obj]
+    return obj
+
+def process_income_event(user_id: str, amount: float) -> dict:
+    """
+    Procesa un evento de ingreso y aplica el algoritmo de suavizado (Smoothing).
+    Implementado para DynamoDB.
+    """
+    db = _get_db()
+    users_table = db.Table(DYNAMODB_TABLE_USERS)
+    txns_table = db.Table(DYNAMODB_TABLE_TRANSACTIONS)
     
-    # 1. Edge Case: Usuario nuevo sin historial
-    if not financial_state:
-        # Se define un salario objetivo constante y robusto inicial con base al ingreso
-        target_salary = amount * SAFETY_FACTOR
-        target_salary = max(target_salary, MIN_SALARY_THRESHOLD)
-        
-        financial_state = FinancialState(
-            user_id=user_id, 
-            current_artificial_salary=target_salary, 
-            available_fund=0.0
-        )
-        db.add(financial_state)
-        # Flush no es estrictamente necesario, pero garantiza que SQLAlchemy maneja el objeto adjunto
+    # 1. Obtener estado actual del usuario
+    response = users_table.get_item(Key={"userId": user_id})
+    user_state = response.get("Item")
+    
+    if not user_state:
+        # 1.1 Usuario nuevo sin historial
+        target_salary = max(amount * SAFETY_FACTOR, MIN_SALARY_THRESHOLD)
+        available_fund = 0.0
+        user_state = {
+            "userId": user_id,
+            "current_artificial_salary": Decimal(str(target_salary)),
+            "stabilization_fund_balance": Decimal(str(available_fund)),
+            "primary_sector": "General", # Default
+            "created_at": datetime.utcnow().isoformat()
+        }
+        users_table.put_item(Item=user_state)
     else:
-        # En vez de un promedio móvil hiper-reactivo, este modelo RESPETA el S_target constante
-        target_salary = financial_state.current_artificial_salary
+        target_salary = float(user_state.get("current_artificial_salary", MIN_SALARY_THRESHOLD))
+        available_fund = float(user_state.get("stabilization_fund_balance", 0.0))
 
     artificial_salary_paid = 0.0
     surplus_to_fund = 0.0
     withdrawn_from_fund = 0.0
     
-    # F_target conceptual (hasta este punto estamos cubiertos, no hay cap explícito en los reqs)
-    # expected_fund_target = target_salary * RESILIENCE_MONTHS
-
     # 3. Lógica principal de Buffer y Absorsión
     if amount >= target_salary:
-        # Ingresos altos: Absorbemos excedentes para construir resiliencia
+        # Ingresos altos: Absorbemos excedentes
         artificial_salary_paid = target_salary
         surplus_to_fund = amount - target_salary
-        financial_state.available_fund += surplus_to_fund
+        available_fund += surplus_to_fund
     else:
-        # Ingresos bajos: El fondo entra a funcionar como buffer
+        # Ingresos bajos: Retiramos del fondo
         deficit = target_salary - amount
-        available_fund = financial_state.available_fund
-
         if available_fund >= deficit:
-            # Fondo es suficiente para mantener el estilo de vida intacto
             withdrawn_from_fund = deficit
-            financial_state.available_fund -= deficit
+            available_fund -= deficit
             artificial_salary_paid = target_salary
         else:
-            # Fondo se drenó, pagamos lo que entró + resto del fondo
             withdrawn_from_fund = available_fund
-            financial_state.available_fund = 0.0
-            # artificial_salary_paid no puede ser menor a I_t pq se da integro
+            available_fund = 0.0
             artificial_salary_paid = amount + withdrawn_from_fund
             
-            # REACCIÓN A LA REALIDAD: Como el fondo se acabó, el usuario no puede mantener este estilo.
-            # Ajustamos el salario objetivo hacia abajo para que meses futuros más reales puedan volver a fondear.
+            # Ajuste de salario objetivo si el fondo se agota
             new_target = (target_salary + artificial_salary_paid) / 2.0
             target_salary = max(new_target, MIN_SALARY_THRESHOLD)
-            financial_state.current_artificial_salary = target_salary
 
-    # El nivel de vida NO se expande automáticamente hacia arriba con el éxito (se construye fondo sólido primero).
-    # En la aplicación real, el usuario elegirá manualmente cuándo subir su estilo de vida.
-
-    # 4. Asegurarse que estado es correcto y no negativo
-    financial_state.available_fund = max(0.0, financial_state.available_fund)
-    
-    # 5. Calcular indicador de resiliencia
-    resilience_indicator = 0.0
-    if target_salary > 0:
-        resilience_indicator = financial_state.available_fund / target_salary
-
-    # 6. Persistencia de transacciones del bloque
-    new_transaction = Transaction(
-        user_id=user_id,
-        amount=amount,
-        target_salary_at_time=target_salary
+    # 4. Actualizar estado
+    available_fund = max(0.0, available_fund)
+    users_table.update_item(
+        Key={"userId": user_id},
+        UpdateExpression="SET stabilization_fund_balance = :f, current_artificial_salary = :s",
+        ExpressionAttributeValues={
+            ":f": Decimal(str(round(available_fund, 2))),
+            ":s": Decimal(str(round(target_salary, 2)))
+        }
     )
-    db.add(new_transaction)
-    db.commit()
+    
+    # 5. Calcular indicadores
+    resilience_indicator = available_fund / target_salary if target_salary > 0 else 0.0
+
+    # 6. Guardar transacción
+    txns_table.put_item(Item={
+        "userId": user_id,
+        "timestamp": datetime.utcnow().isoformat(),
+        "amount": Decimal(str(amount)),
+        "type": "ingreso",
+        "target_salary_at_time": Decimal(str(round(target_salary, 2))),
+        "fund_after": Decimal(str(round(available_fund, 2)))
+    })
 
     return {
         "amount_processed": amount,
-        "artificial_salary_paid": artificial_salary_paid,
-        "surplus_to_fund": surplus_to_fund,
-        "withdrawn_from_fund": withdrawn_from_fund,
-        "current_target": target_salary,
-        "remaining_fund": financial_state.available_fund,
-        "resilience_indicator": resilience_indicator
+        "artificial_salary_paid": round(artificial_salary_paid, 2),
+        "surplus_to_fund": round(surplus_to_fund, 2),
+        "withdrawn_from_fund": round(withdrawn_from_fund, 2),
+        "current_target": round(target_salary, 2),
+        "remaining_fund": round(available_fund, 2),
+        "resilience_indicator": round(resilience_indicator, 2)
     }

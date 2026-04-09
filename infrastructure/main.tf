@@ -56,6 +56,17 @@ module "cognito" {
 }
 
 # ---------------------------------------------------------------------
+# MÓDULO DE CÓMPUTO (LAMBDA)
+# Aquí residen las funciones que ejecutan nuestra lógica de negocio.
+# ---------------------------------------------------------------------
+module "lambda" {
+  source           = "./modules/lambda"
+  project_name     = var.project_name
+  env              = var.env
+  lambda_role_arn  = aws_iam_role.lambda_exec.arn
+}
+
+# ---------------------------------------------------------------------
 # MÓDULO DE ENRUTAMIENTO (API GATEWAY)
 # El proxy HTTP desde donde recibimos el tráfico entrante del Front.
 # Se integra directamente con los parámetros/ID salientes de Cognito.
@@ -66,4 +77,10 @@ module "api_gateway" {
   cognito_client_id = module.cognito.user_pool_client
   cognito_pool_id   = module.cognito.user_pool_id
   region            = var.aws_region
+  
+  # Lambdas para integración
+  income_processor_arn = module.lambda.income_processor_arn
+  smoothing_engine_arn = module.lambda.smoothing_engine_arn
+  prediction_engine_arn = module.lambda.prediction_engine_arn
+  advice_generator_arn = module.lambda.advice_generator_arn
 }

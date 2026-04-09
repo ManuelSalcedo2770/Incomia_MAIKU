@@ -483,7 +483,7 @@ def _fetch_user_data(user_id: str) -> Tuple[Dict, List[Dict], List[Dict]]:
 
     # Perfil
     tbl_users = ddb.Table(DYNAMODB_TABLE_USERS)
-    resp = tbl_users.get_item(Key={"user_id": user_id})
+    resp = tbl_users.get_item(Key={"userId": user_id})
     user = _decimal_to_float(resp.get("Item", {}))
     if not user:
         raise ValueError(f"Usuario {user_id} no encontrado.")
@@ -491,7 +491,7 @@ def _fetch_user_data(user_id: str) -> Tuple[Dict, List[Dict], List[Dict]]:
     # Transacciones (Query con GSI o Scan filtrado)
     tbl_txns = ddb.Table(DYNAMODB_TABLE_TRANSACTIONS)
     txns = []
-    scan_kwargs = {"FilterExpression": "user_id = :uid", "ExpressionAttributeValues": {":uid": user_id}}
+    scan_kwargs = {"FilterExpression": "userId = :uid", "ExpressionAttributeValues": {":uid": user_id}}
     while True:
         resp = tbl_txns.scan(**scan_kwargs)
         txns.extend(_decimal_to_float(resp.get("Items", [])))
@@ -502,7 +502,7 @@ def _fetch_user_data(user_id: str) -> Tuple[Dict, List[Dict], List[Dict]]:
     # Gastos
     tbl_exp = ddb.Table(DYNAMODB_TABLE_EXPENSES)
     exps = []
-    scan_kwargs = {"FilterExpression": "user_id = :uid", "ExpressionAttributeValues": {":uid": user_id}}
+    scan_kwargs = {"FilterExpression": "userId = :uid", "ExpressionAttributeValues": {":uid": user_id}}
     while True:
         resp = tbl_exp.scan(**scan_kwargs)
         exps.extend(_decimal_to_float(resp.get("Items", [])))

@@ -51,3 +51,73 @@ resource "aws_apigatewayv2_stage" "default" {
   name        = "$default"
   auto_deploy = true
 }
+# 4. INTEGRACIONES (PUENTE ENTRE API Y LAMBDA)
+resource "aws_apigatewayv2_integration" "income" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = var.income_processor_arn
+}
+
+resource "aws_apigatewayv2_integration" "smoothing" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = var.smoothing_engine_arn
+}
+
+resource "aws_apigatewayv2_integration" "prediction" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = var.prediction_engine_arn
+}
+
+resource "aws_apigatewayv2_integration" "advice" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = var.advice_generator_arn
+}
+
+# 5. RUTAS (LOS ENDPOINTS)
+resource "aws_apigatewayv2_route" "post_income" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /income"
+  target    = "integrations/${aws_apigatewayv2_integration.income.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_apigatewayv2_route" "get_income" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /income"
+  target    = "integrations/${aws_apigatewayv2_integration.income.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_apigatewayv2_route" "get_smoothing" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /smoothing"
+  target    = "integrations/${aws_apigatewayv2_integration.smoothing.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_apigatewayv2_route" "get_predictions" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /predictions"
+  target    = "integrations/${aws_apigatewayv2_integration.prediction.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_apigatewayv2_route" "get_advice" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /advice"
+  target    = "integrations/${aws_apigatewayv2_integration.advice.id}"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}

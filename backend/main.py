@@ -18,7 +18,12 @@ app.include_router(balance.router)
 
 @app.get("/", tags=["Health"])
 def health_check():
-    return {"status": "ok", "message": "Incomia API is running locally!"}
+    return {
+        "status": "ok", 
+        "message": "Incomia API is running locally!",
+        "architecture": "Transitioning to AWS Serverless (Lambdas/DynamoDB)",
+        "endpoints_available": ["POST /income", "GET /income", "GET /smoothing", "GET /predictions", "GET /advice"]
+    }
 
 if __name__ == "__main__":
     import uvicorn

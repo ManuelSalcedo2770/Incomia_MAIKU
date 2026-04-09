@@ -14,6 +14,26 @@ variable "cognito_pool_id" {
 }
 
 variable "region" {
-  description = "Región AWS donde vive el User Pool de Cognito"
+  description = "Región AWS"
+  type        = string
+}
+
+variable "income_processor_arn" {
+  description = "ARN de la lambda de procesamiento de ingresos"
+  type        = string
+}
+
+variable "smoothing_engine_arn" {
+  description = "ARN de la lambda de motor de smoothing"
+  type        = string
+}
+
+variable "prediction_engine_arn" {
+  description = "ARN de la lambda de predicción de liquidez"
+  type        = string
+}
+
+variable "advice_generator_arn" {
+  description = "ARN de la lambda de asesor IA"
   type        = string
 }

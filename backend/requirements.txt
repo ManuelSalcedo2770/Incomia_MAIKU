@@ -4,4 +4,10 @@ sqlalchemy
 pydantic
 pyjwt
 boto3
-moto
+requests
+numpy
+mangum
+python-multipart
+# AI dependencies (Optional for local, handled by Lambda Layers in AWS usually)
+# prophet
+# pandas

@@ -515,14 +515,14 @@ def _fetch_user_data(user_id: str):
     cfg = BotoConfig(region_name=AWS_REGION, retries={"max_attempts": 3, "mode": "exponential"})
     ddb = boto3.resource("dynamodb", config=cfg)
 
-    user = _decimal_to_float(ddb.Table(DYNAMODB_TABLE_USERS).get_item(Key={"user_id": user_id}).get("Item", {}))
+    user = _decimal_to_float(ddb.Table(DYNAMODB_TABLE_USERS).get_item(Key={"userId": user_id}).get("Item", {}))
     if not user:
         raise ValueError(f"Usuario {user_id} no encontrado.")
 
     txns, exps = [], []
     for tbl_name, lst in [(DYNAMODB_TABLE_TRANSACTIONS, txns), (DYNAMODB_TABLE_EXPENSES, exps)]:
         tbl = ddb.Table(tbl_name)
-        kw = {"FilterExpression": "user_id = :uid", "ExpressionAttributeValues": {":uid": user_id}}
+        kw = {"FilterExpression": "userId = :uid", "ExpressionAttributeValues": {":uid": user_id}}
         while True:
             r = tbl.scan(**kw)
             lst.extend(_decimal_to_float(r.get("Items", [])))
