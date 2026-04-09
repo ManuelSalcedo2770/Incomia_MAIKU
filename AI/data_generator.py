@@ -129,7 +129,7 @@ def _generate_user_profiles() -> List[Dict[str, Any]]:
             "city": "CDMX",
         },
         {
-            "userId": f"USR-{uuid.uuid4().hex[:8].upper()}",
+            "userId": "USR-FD8F0536", # ID Consistente para Pruebas y Demo
             "primary_sector": "Delivery",
             "sub_sector": "Conductor_Uber",
             "display_name": "Conductor Uber",

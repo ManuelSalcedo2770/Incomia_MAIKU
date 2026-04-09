@@ -186,7 +186,7 @@ export const financialService = {
   getCashFlowHistory: async (): Promise<any[]> => {
     try {
       // Usamos el endpoint de ingresos para poblar el histórico
-      const resp = await api.get(`/income?user_id=${TEST_USER_ID}`);
+      await api.get(`/income?user_id=${TEST_USER_ID}`);
       // Simulación de agregación por mes para la gráfica si el back no lo hace
       return [
         { id: 'cf-1', month: 'Junio', real: 5050, stabilized: 4250 },
