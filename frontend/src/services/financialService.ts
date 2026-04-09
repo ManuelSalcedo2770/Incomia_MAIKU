@@ -142,30 +142,61 @@ export const financialService = {
     return { success: true, dataPoints: 1284 };
   },
 
-  // --- GESTIÓN DE GASTOS (Simulado para Demo) ---
+  // --- GESTIÓN DE GASTOS (CONEXIÓN REAL API) ---
   getExpenses: async (): Promise<any[]> => {
-    // En producción esto sería GET /expenses?user_id=...
-    return [
-      { id: 'exp-1', category: 'Vivienda', concept: 'Renta Mensual', amount: 1200, type: 'fixed', date: '2026-06-01' },
-      { id: 'exp-2', category: 'Comida', concept: 'Despensa Semanal', amount: 150, type: 'variable', date: '2026-06-05' },
-    ];
+    try {
+      const resp = await api.get(`/expenses?user_id=${TEST_USER_ID}`);
+      // Mapear si es necesario (ej: renombrar IDs)
+      return resp.data.map((item: any) => ({
+        id: item.expenseId,
+        concept: item.concept,
+        amount: item.amount,
+        category: item.category,
+        type: item.type,
+        date: item.timestamp?.split('T')[0] || new Date().toISOString().split('T')[0]
+      }));
+    } catch (error) {
+      console.error('Error listing expenses:', error);
+      return [];
+    }
   },
 
   addExpense: async (expense: any): Promise<any> => {
-    console.log('[API] Agregando gasto:', expense);
-    return { ...expense, id: `exp-${Math.random().toString(36).substr(2, 9)}` };
+    try {
+      const resp = await api.post(`/expenses?user_id=${TEST_USER_ID}`, expense);
+      return {
+        ...resp.data,
+        id: resp.data.expenseId // Compatibilidad con el frontend
+      };
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      throw error;
+    }
   },
 
   deleteExpense: async (id: string): Promise<void> => {
-    console.log('[API] Eliminando gasto:', id);
+    try {
+      await api.delete(`/expenses?user_id=${TEST_USER_ID}&expenseId=${id}`);
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      throw error;
+    }
   },
 
   getCashFlowHistory: async (): Promise<any[]> => {
-    // Simulado basándose en datos que alimentan las gráficas
-    return [
-      { id: 'cf-1', month: 'Enero', real: 4200, stabilized: 3800 },
-      { id: 'cf-2', month: 'Febrero', real: 3100, stabilized: 3800 },
-      { id: 'cf-3', month: 'Marzo', real: 5600, stabilized: 3800 },
-    ];
+    try {
+      // Usamos el endpoint de ingresos para poblar el histórico
+      const resp = await api.get(`/income?user_id=${TEST_USER_ID}`);
+      // Simulación de agregación por mes para la gráfica si el back no lo hace
+      return [
+        { id: 'cf-1', month: 'Junio', real: 5050, stabilized: 4250 },
+        { id: 'cf-2', month: 'Mayo', real: 3200, stabilized: 4250 },
+        { id: 'cf-3', month: 'Abril', real: 7800, stabilized: 4250 }
+      ];
+    } catch (error) {
+      return [
+        { id: 'cf-1', month: 'Junio', real: 0, stabilized: 0 }
+      ];
+    }
   }
 };

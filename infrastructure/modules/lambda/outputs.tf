@@ -11,7 +11,11 @@ output "prediction_engine_arn" {
 }
 
 output "advice_generator_arn" {
-  value = aws_lambda_function.advice_generator.arn
+  value = aws_lambda_function.advice_generator.invoke_arn
+}
+
+output "expense_processor_arn" {
+  value = aws_lambda_function.expense_processor.invoke_arn
 }
 
 output "income_processor_name" {

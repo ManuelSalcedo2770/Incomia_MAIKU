@@ -37,3 +37,8 @@ variable "advice_generator_arn" {
   description = "ARN de la lambda de asesor IA"
   type        = string
 }
+
+variable "expense_processor_arn" {
+  description = "ARN de la lambda de procesamiento de gastos"
+  type        = string
+}

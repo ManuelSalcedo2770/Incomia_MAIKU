@@ -82,5 +82,6 @@ module "api_gateway" {
   income_processor_arn = module.lambda.income_processor_arn
   smoothing_engine_arn = module.lambda.smoothing_engine_arn
   prediction_engine_arn = module.lambda.prediction_engine_arn
-  advice_generator_arn = module.lambda.advice_generator_arn
+  advice_generator_arn  = module.lambda.advice_generator_arn
+  expense_processor_arn = module.lambda.expense_processor_arn
 }

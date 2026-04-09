@@ -31,6 +31,13 @@ data "archive_file" "advice_generator" {
   output_path = "${path.module}/advice_generator.zip"
 }
 
+data "archive_file" "expense_processor" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../backend"
+  output_path = "${path.module}/expense_processor.zip"
+  excludes    = ["Dockerfile", "incomia.db", "__pycache__", "db", "models", "routes", "main.py"]
+}
+
 # 1. FUNCIÓN: PROCESADOR DE INGRESOS (POST /income, GET /income)
 resource "aws_lambda_function" "income_processor" {
   filename         = data.archive_file.income_processor.output_path
@@ -108,6 +115,24 @@ resource "aws_lambda_function" "advice_generator" {
   }
 }
 
+# 5. FUNCIÓN: PROCESADOR DE GASTOS (CRUD /expenses)
+resource "aws_lambda_function" "expense_processor" {
+  filename         = data.archive_file.expense_processor.output_path
+  source_code_hash = data.archive_file.expense_processor.output_base64sha256
+  function_name    = "${var.project_name}-expense-processor-${var.env}"
+  role          = var.lambda_role_arn
+  handler       = "expense_handler.lambda_handler"
+  runtime       = "python3.11"
+  timeout       = 30
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_EXPENSES = "${var.project_name}-expenses-${var.env}"
+      ENV                     = var.env
+    }
+  }
+}
+
 # PERMISOS PARA API GATEWAY INVOCAR LAMBDAS
 resource "aws_lambda_permission" "apigw_income" {
   statement_id  = "AllowAPIGatewayInvokeIncome"
@@ -134,5 +159,12 @@ resource "aws_lambda_permission" "apigw_advice" {
   statement_id  = "AllowAPIGatewayInvokeAdvice"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.advice_generator.function_name
+  principal     = "apigateway.amazonaws.com"
+}
+
+resource "aws_lambda_permission" "apigw_expenses" {
+  statement_id  = "AllowAPIGatewayInvokeExpenses"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.expense_processor.function_name
   principal     = "apigateway.amazonaws.com"
 }
