@@ -96,11 +96,14 @@ def process_income_event(user_id: str, amount: float) -> dict:
     resilience_indicator = available_fund / target_salary if target_salary > 0 else 0.0
 
     # 6. Guardar transacción
+    import uuid
     txns_table.put_item(Item={
         "userId": user_id,
+        "transactionId": f"TXN-{uuid.uuid4().hex[:8].upper()}", # Requerido por el esquema de DB
         "timestamp": datetime.utcnow().isoformat(),
         "amount": Decimal(str(amount)),
         "type": "ingreso",
+        "description": "Depósito procesado por IA",
         "target_salary_at_time": Decimal(str(round(target_salary, 2))),
         "fund_after": Decimal(str(round(available_fund, 2)))
     })

@@ -44,15 +44,21 @@ def lambda_handler(event, context):
     elif method == 'POST':
         try:
             body = json.loads(event.get('body', '{}'))
-            if not body.get('amount') or not body.get('concept'):
-                return _response(400, {"error": "Missing amount or concept"})
+            # Soportamos tanto 'name' (frontend) como 'concept' (backend original)
+            amount = body.get('amount')
+            concept = body.get('name') or body.get('concept')
+            
+            if not amount or not concept:
+                return _response(400, {"error": "Missing amount or name/concept"})
 
-            expense_id = str(uuid.uuid4())[:8]
+            expense_id = body.get('expenseId') or body.get('id') or str(uuid.uuid4())[:8]
+            from decimal import Decimal
             item = {
                 "userId": user_id,
                 "expenseId": expense_id,
-                "concept": body.get('concept'),
-                "amount": float(body.get('amount')),
+                "name": concept,
+                "concept": concept,
+                "amount": Decimal(str(amount)),
                 "category": body.get('category', 'Otros'),
                 "type": body.get('type', 'fixed'),
                 "timestamp": datetime.utcnow().isoformat()

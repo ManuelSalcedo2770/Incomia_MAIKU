@@ -87,7 +87,7 @@ export function CashFlowChart({ data, className }: CashFlowChartProps) {
             />
             <Area 
               type="monotone" 
-              dataKey="real" 
+              dataKey="realIncome" 
               stroke="#C0C0C0" 
               strokeWidth={2}
               strokeDasharray="5 5"
@@ -97,7 +97,7 @@ export function CashFlowChart({ data, className }: CashFlowChartProps) {
             />
             <Area 
               type="monotone" 
-              dataKey="stabilized" 
+              dataKey="payout" 
               stroke="#FF99AA" 
               strokeWidth={3}
               fillOpacity={1} 

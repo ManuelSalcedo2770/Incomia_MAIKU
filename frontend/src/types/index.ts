@@ -45,6 +45,8 @@ export interface FinancialSummary {
   };
   /** Lista de transacciones recientes para el dashboard */
   recentTransactions: Transaction[];
+  /** Historial para gráficas de flujo de caja */
+  cashFlowHistory: CashFlowData[];
 }
 
 /**
@@ -83,9 +85,9 @@ export interface SavingGoal {
 export interface CashFlowData {
   month: string;
   /** Ingresos variables brutos (pre-suavizado) */
-  real: number;
+  realIncome: number;
   /** Ingresos estables (post-suavizado Incomia) */
-  stabilized: number;
+  payout: number;
 }
 
 /**

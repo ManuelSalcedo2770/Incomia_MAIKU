@@ -37,16 +37,17 @@ export const financialService = {
       return {
         nextIncome: {
           amount: data.artificial_salary,
-          date: new Date().toISOString().split('T')[0], // Hoy
+          date: new Date().toISOString().split('T')[0],
           description: 'Depósito Incomia Garantizado'
         },
         stabilityReserve: {
           current: data.stabilization_fund,
-          target: data.artificial_salary * 1.5, // Arbitrario para demo
+          target: data.artificial_salary * 1.5,
           progress: data.resilience_indicator * 100,
           message: data.resilience_indicator > 0.5 ? 'Fondo sólido' : 'Construyendo reserva'
         },
-        recentTransactions: [] // Se podría poblar con /income
+        cashFlowHistory: data.history || [], // Nuevo mapeo para gráficas
+        recentTransactions: []
       };
     } catch (error) {
       console.error('Error fetching summary:', error);

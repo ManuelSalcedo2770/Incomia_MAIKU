@@ -99,6 +99,7 @@ export const useAppStore = create<AppState>((set) => ({
         salaryConfig, 
         advice, 
         predictions, 
+        cashFlowHistory: summary.cashFlowHistory || [],
         isLoading: false 
       });
     } catch (err) {

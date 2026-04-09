@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import boto3
+from datetime import datetime
 from decimal import Decimal
 
 # Añadir el path raíz para importar servicios
@@ -23,31 +24,52 @@ def lambda_handler(event, context):
     table = db.Table(DYNAMODB_TABLE_USERS)
     
     try:
+        # 1. Obtener estado actual
         response = table.get_item(Key={"userId": user_id})
         item = response.get("Item")
         
+        # 2. Obtener historial de transacciones para las gráficas
+        tx_table = db.Table(os.environ.get("DYNAMODB_TABLE_TRANSACTIONS", "incomia-transactions-dev"))
+        # En una app real usaríamos Query con KeyConditionExpression. Para demo usamos Scan limitado.
+        tx_resp = tx_table.scan(
+            FilterExpression=boto3.dynamodb.conditions.Attr("userId").eq(user_id),
+            Limit=50 # Suficiente para mostrar tendencia reciente
+        )
+        transactions = tx_resp.get('Items', [])
+        
+        # Agrupar por mes para la gráfica (últimos 6 meses)
+        # Por simplicidad para la demo, mapeamos los últimos registros a puntos de gráfica
+        history = []
+        months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        
+        # Tomamos una muestra de transacciones y las proyectamos
+        sorted_txs = sorted(transactions, key=lambda x: x.get('timestamp', ''), reverse=True)
+        for i, tx in enumerate(sorted_txs[:6]):
+            month_idx = (datetime.now().month - 1 - i) % 12
+            history.append({
+                "month": months[month_idx],
+                "realIncome": float(tx.get('amount', 0)),
+                "payout": float(tx.get('target_salary_at_time') or item.get('current_artificial_salary') if item else 3000)
+            })
+        
+        history.reverse() # Orden cronológico
+
         if not item:
-            # En lugar de 404, devolvemos un estado inicial seguro para que el Dashboard no se cuelgue
+            # Fallback seguro
             return _response(200, {
                 "userId": user_id,
                 "artificial_salary": 0,
                 "stabilization_fund": 0,
                 "resilience_indicator": 0,
-                "message": "Bienvenido a Incomia. Comience cargando sus depósitos."
+                "history": history
             })
-            
-        # Convertir Decimal a float para JSON
-        result = _decimal_to_float(item)
-        
-        # Soportamos ambos nombres de campos (transición de schema)
-        salary = result.get("current_artificial_salary") or result.get("artificial_salary") or 0
-        fund = result.get("stabilization_fund_balance") or 0
-        
+
         return _response(200, {
-            "userId": result["userId"],
-            "artificial_salary": salary,
-            "stabilization_fund": fund,
-            "resilience_indicator": (fund / salary) if salary > 0 else 0
+            "userId": user_id,
+            "artificial_salary": float(item.get("current_artificial_salary") or item.get("artificial_salary") or 0),
+            "stabilization_fund": float(item.get("stabilization_fund_balance") or 0),
+            "resilience_indicator": float(item.get("stabilization_fund_balance", 0)) / float(item.get("current_artificial_salary", 1)) if float(item.get("current_artificial_salary", 0)) > 0 else 0,
+            "history": history
         })
     except Exception as e:
         return _response(500, {"error": str(e)})

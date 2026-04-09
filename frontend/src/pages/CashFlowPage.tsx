@@ -99,8 +99,8 @@ export function CashFlowPage() {
                   itemStyle={{ color: '#fff' }}
                   formatter={(value: any) => [format(value), '']}
                 />
-                <Bar dataKey="real" radius={[4, 4, 0, 0]} barSize={28} fill="#f1f5f9" opacity={0.3} />
-                <Bar dataKey="stabilized" radius={[4, 4, 0, 0]} barSize={28} fill="#10B981" />
+                <Bar dataKey="realIncome" radius={[4, 4, 0, 0]} barSize={28} fill="#f1f5f9" opacity={0.3} />
+                <Bar dataKey="payout" radius={[4, 4, 0, 0]} barSize={28} fill="#10B981" />
               </BarChart>
             </ResponsiveContainer>
           </div>
