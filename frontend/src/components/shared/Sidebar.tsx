@@ -16,7 +16,7 @@ import { Button } from '../ui/Button';
 import { useAppStore } from '../../store/useAppStore';
 
 const menuItems = [
-  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { id: 'salary', icon: Settings2, label: 'Salary Config', path: '/salary' },
   { id: 'cashflow', icon: ArrowUpRight, label: 'Cash Flow', path: '/cashflow' },
   { id: 'deposits', icon: History, label: 'Deposits', path: '/deposits' },

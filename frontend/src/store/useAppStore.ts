@@ -44,6 +44,10 @@ interface AppState {
   updateSettings: (settings: Partial<AppSettings>) => void;
   /** Cambia el tema global (Light/Dark) */
   setTheme: (theme: 'light' | 'dark') => void;
+  /** Gestión de Gastos Recurrentes */
+  fetchExpenses: () => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -61,7 +65,7 @@ export const useAppStore = create<AppState>((set) => ({
   advice: [],
   predictions: [],
   settings: {
-    theme: 'dark',
+    theme: 'light',
     notifications: {
       deposits: true,
       expenses: true
@@ -127,5 +131,41 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       settings: { ...state.settings, theme }
     }));
+  },
+
+  fetchExpenses: async () => {
+    set({ isLoading: true });
+    try {
+      const expenses = await financialService.getExpenses();
+      set({ expenses, isLoading: false });
+    } catch (err) {
+      set({ error: 'Failed to fetch expenses', isLoading: false });
+    }
+  },
+
+  addExpense: async (expenseData) => {
+    set({ isLoading: true });
+    try {
+      const newExpense = await financialService.addExpense(expenseData);
+      set((state) => ({ 
+        expenses: [newExpense, ...state.expenses],
+        isLoading: false 
+      }));
+    } catch (err) {
+      set({ error: 'Failed to add expense', isLoading: false });
+    }
+  },
+
+  deleteExpense: async (id) => {
+    set({ isLoading: true });
+    try {
+      await financialService.deleteExpense(id);
+      set((state) => ({ 
+        expenses: state.expenses.filter(e => e.id !== id),
+        isLoading: false 
+      }));
+    } catch (err) {
+      set({ error: 'Failed to delete expense', isLoading: false });
+    }
   },
 }));

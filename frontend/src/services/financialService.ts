@@ -140,5 +140,32 @@ export const financialService = {
   uploadData: async (file: File): Promise<{ success: boolean; dataPoints: number }> => {
     console.log('[AWS Integration] S3 Uploading simulation:', file.name);
     return { success: true, dataPoints: 1284 };
+  },
+
+  // --- GESTIÓN DE GASTOS (Simulado para Demo) ---
+  getExpenses: async (): Promise<any[]> => {
+    // En producción esto sería GET /expenses?user_id=...
+    return [
+      { id: 'exp-1', category: 'Vivienda', concept: 'Renta Mensual', amount: 1200, type: 'fixed', date: '2026-06-01' },
+      { id: 'exp-2', category: 'Comida', concept: 'Despensa Semanal', amount: 150, type: 'variable', date: '2026-06-05' },
+    ];
+  },
+
+  addExpense: async (expense: any): Promise<any> => {
+    console.log('[API] Agregando gasto:', expense);
+    return { ...expense, id: `exp-${Math.random().toString(36).substr(2, 9)}` };
+  },
+
+  deleteExpense: async (id: string): Promise<void> => {
+    console.log('[API] Eliminando gasto:', id);
+  },
+
+  getCashFlowHistory: async (): Promise<any[]> => {
+    // Simulado basándose en datos que alimentan las gráficas
+    return [
+      { id: 'cf-1', month: 'Enero', real: 4200, stabilized: 3800 },
+      { id: 'cf-2', month: 'Febrero', real: 3100, stabilized: 3800 },
+      { id: 'cf-3', month: 'Marzo', real: 5600, stabilized: 3800 },
+    ];
   }
 };

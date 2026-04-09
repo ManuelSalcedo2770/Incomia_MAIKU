@@ -202,6 +202,41 @@ export function CashFlowPage() {
         </Card>
       </div>
 
+
+      {/* Historical Incomes List */}
+      <div className="space-y-6 pt-4">
+        <div className="flex justify-between items-end italic">
+          <div className="italic">
+            <h4 className="text-2xl font-display font-bold text-primary dark:text-white italic">Historial de Ingresos Reales</h4>
+            <p className="text-xs text-slate-400 italic">Lista detallada de depósitos analizados por Incomia.</p>
+          </div>
+          <Button variant="ghost" className="text-xs font-bold text-emerald-600 hover:emerald-700 italic">Refrescar Datos</Button>
+        </div>
+
+        <div className="space-y-4">
+          {[
+            { id: 'tx-1', date: '28 de Junio, 2026', source: 'Depósito Cliente: TechCorp', amount: 3200, status: 'Procesado' },
+            { id: 'tx-2', date: '15 de Junio, 2026', source: 'Transferencia: Proyecto Alpha', amount: 1850, status: 'Procesado' },
+            { id: 'tx-3', date: '02 de Junio, 2026', source: 'Bonus Performance Q2', amount: 1200, status: 'Procesado' },
+            { id: 'tx-4', date: '28 de Mayo, 2026', source: 'Depósito Cliente: TechCorp', amount: 3200, status: 'Anterior' },
+            { id: 'tx-5', date: '14 de Mayo, 2026', source: 'Consultoría UX', amount: 800, status: 'Anterior' },
+          ].map((tx) => (
+            <Card key={tx.id} className="flex items-center justify-between p-6 hover:premium-hover premium-transition italic border-slate-100 dark:border-white/5">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-400">
+                  <BarChart2 size={20} />
+                </div>
+                <div>
+                  <p className="font-bold text-primary dark:text-white italic">{tx.source}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{tx.date} • <span className="text-emerald-500">{tx.status}</span></p>
+                </div>
+              </div>
+              <p className="text-xl font-display font-bold text-emerald-500 italic">+{format(tx.amount)}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+
       {/* Hero Action Card */}
       <Card className="bg-primary dark:bg-primary-dark text-white p-0 relative overflow-hidden italic group border-none">
         <img

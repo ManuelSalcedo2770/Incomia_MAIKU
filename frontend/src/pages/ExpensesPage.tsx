@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   AlertTriangle, 
   Trash2, 
@@ -40,9 +40,32 @@ const quickAddCategories = [
 ];
 
 export function ExpensesPage() {
-  const { expenses, salaryConfig } = useAppStore();
+  const { expenses, salaryConfig, addExpense, deleteExpense, fetchExpenses } = useAppStore();
   const { format } = useCurrency();
   const [activeTab, setActiveTab] = useState('mensual');
+  const [showModal, setShowModal] = useState(false);
+  const [newExpense, setNewExpense] = useState<{ concept: string; amount: number; category: string; type: 'fixed' | 'variable' }>({ 
+    concept: '', 
+    amount: 0, 
+    category: 'Otros', 
+    type: 'fixed' 
+  });
+
+  useEffect(() => {
+    fetchExpenses();
+  }, [fetchExpenses]);
+
+  const handleQuickAdd = (category: string) => {
+    setNewExpense(prev => ({ ...prev, category }));
+    setShowModal(true);
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addExpense({ ...newExpense, amount: Number(newExpense.amount) });
+    setShowModal(false);
+    setNewExpense({ concept: '', amount: 0, category: 'Otros', type: 'fixed' });
+  };
 
   const totalMonthly = expenses.reduce((acc, curr) => acc + curr.amount, 0);
   const salaryLimit = salaryConfig?.desiredAmount || 3400;
@@ -176,12 +199,22 @@ export function ExpensesPage() {
       <div className="space-y-6 italic">
          <div className="flex justify-between items-end italic">
             <h4 className="text-xl font-bold text-primary dark:text-white italic leading-tight">Agregar Nuevo Gasto</h4>
-            <button className="text-xs font-bold text-emerald-600 hover:underline italic">Ver todas las categorías</button>
+            <Button 
+               variant="ghost" 
+               className="text-xs font-bold text-emerald-600 hover:underline italic"
+               onClick={() => setShowModal(true)}
+            >
+              Nuevo Formulario
+            </Button>
          </div>
 
          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 italic">
             {quickAddCategories.map((cat, i) => (
-              <button key={i} className="p-6 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[32px] flex flex-col items-center gap-4 hover:premium-hover premium-transition group italic">
+              <button 
+                key={i} 
+                onClick={() => handleQuickAdd(cat.label)}
+                className="p-6 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[32px] flex flex-col items-center gap-4 hover:premium-hover premium-transition group italic"
+              >
                  <div className="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:bg-primary dark:group-hover:bg-emerald-500 group-hover:text-white transition-colors italic">
                     <cat.icon size={24} />
                  </div>
@@ -250,7 +283,12 @@ export function ExpensesPage() {
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary dark:hover:text-emerald-400 italic">
                                 <Edit3 size={14} />
                              </Button>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500 dark:hover:text-red-400 italic">
+                             <Button 
+                                onClick={() => deleteExpense(expense.id)}
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-slate-400 hover:text-red-500 dark:hover:text-red-400 italic"
+                              >
                                 <Trash2 size={14} />
                              </Button>
                           </div>
@@ -272,6 +310,54 @@ export function ExpensesPage() {
             <span className="italic font-bold">Optimizar Gastos</span>
          </Button>
       </div>
+      {/* Add Expense Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/80 backdrop-blur-md italic">
+          <Card className="w-full max-w-md p-8 animate-in zoom-in duration-300">
+            <h3 className="text-2xl font-display font-bold mb-6 text-primary dark:text-white">Nuevo Gasto</h3>
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Concepto</label>
+                <input 
+                  type="text" 
+                  value={newExpense.concept}
+                  onChange={e => setNewExpense(prev => ({ ...prev, concept: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                  placeholder="Ej. Netflix, Renta..."
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Monto</label>
+                  <input 
+                    type="number" 
+                    value={newExpense.amount}
+                    onChange={e => setNewExpense(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Tipo</label>
+                  <select 
+                    value={newExpense.type}
+                    onChange={e => setNewExpense(prev => ({ ...prev, type: e.target.value as 'fixed' | 'variable' }))}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                  >
+                    <option value="fixed">Fijo</option>
+                    <option value="variable">Variable</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-6">
+                <Button variant="ghost" className="flex-1" onClick={() => setShowModal(false)}>Cancelar</Button>
+                <Button variant="emerald" className="flex-1" type="submit">Guardar Gasto</Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
