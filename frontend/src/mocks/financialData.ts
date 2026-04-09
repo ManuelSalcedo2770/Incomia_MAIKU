@@ -71,6 +71,7 @@ export const mockFinancialSummary: FinancialSummary = {
     message: '"Estás al 85% de tu reserva de seguridad. Incomia sugiere mantener el ajuste actual para alcanzar el 100% en Enero."',
   },
   recentTransactions: mockTransactions.slice(0, 5),
+  cashFlowHistory: [], // Agregado para cumplir con la interfaz
 };
 
 export const mockSalaryConfig: SalaryConfig = {
@@ -102,16 +103,16 @@ export const mockSavingGoals: SavingGoal[] = [
 
 /**
  * Representación visual del valor de Incomia:
- * 'real' muestra la volatilidad típica de un freelance (serrucho).
- * 'stabilized' muestra la línea constante que ofrece el producto.
+ * 'realIncome' muestra la volatilidad típica de un freelance (serrucho).
+ * 'payout' muestra la línea constante que ofrece el producto.
  */
 export const mockCashFlowHistory: CashFlowData[] = [
-  { month: 'JUL', real: 4200, stabilized: 3200 }, // Superávit -> a reserva
-  { month: 'AGO', real: 1800, stabilized: 3200 }, // Déficit -> cubierto por reserva
-  { month: 'SEP', real: 5100, stabilized: 3200 }, // Superávit -> a reserva
-  { month: 'OCT', real: 2400, stabilized: 3200 }, // Déficit -> cubierto por reserva
-  { month: 'NOV', real: 6350, stabilized: 3200 }, // Salto alto
-  { month: 'DIC', real: 1200, stabilized: 3200 }, // Caída fuerte (Navidad/Baja demanda)
+  { month: 'JUL', realIncome: 4200, payout: 3200 }, // Superávit -> a reserva
+  { month: 'AGO', realIncome: 1800, payout: 3200 }, // Déficit -> cubierto por reserva
+  { month: 'SEP', realIncome: 5100, payout: 3200 }, // Superávit -> a reserva
+  { month: 'OCT', realIncome: 2400, payout: 3200 }, // Déficit -> cubierto por reserva
+  { month: 'NOV', realIncome: 6350, payout: 3200 }, // Salto alto
+  { month: 'DIC', realIncome: 1200, payout: 3200 }, // Caída fuerte (Navidad/Baja demanda)
 ];
 
 export const mockExpenses: Expense[] = [
