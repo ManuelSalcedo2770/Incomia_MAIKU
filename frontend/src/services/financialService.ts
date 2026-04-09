@@ -150,11 +150,11 @@ export const financialService = {
       // Mapear si es necesario (ej: renombrar IDs)
       return resp.data.map((item: any) => ({
         id: item.expenseId,
-        concept: item.concept,
-        amount: item.amount,
+        concept: item.name || item.concept,
+        amount: parseFloat(item.amount) || 0,
         category: item.category,
-        type: item.type,
-        date: item.timestamp?.split('T')[0] || new Date().toISOString().split('T')[0]
+        type: item.type || 'fixed',
+        date: item.timestamp?.split('T')[0] || item.created_at?.split('T')[0] || new Date().toISOString().split('T')[0]
       }));
     } catch (error) {
       console.error('Error listing expenses:', error);
@@ -164,7 +164,9 @@ export const financialService = {
 
   addExpense: async (expense: any): Promise<any> => {
     try {
-      const resp = await api.post(`/expenses?user_id=${TEST_USER_ID}`, expense);
+      // Enviar 'name' para compatibilidad con el backend
+      const payload = { ...expense, name: expense.concept || expense.name };
+      const resp = await api.post(`/expenses?user_id=${TEST_USER_ID}`, payload);
       return {
         ...resp.data,
         id: resp.data.expenseId // Compatibilidad con el frontend

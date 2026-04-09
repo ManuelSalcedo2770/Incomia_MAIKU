@@ -28,34 +28,56 @@ def lambda_handler(event, context):
         response = table.get_item(Key={"userId": user_id})
         item = response.get("Item")
         
-        # 2. Obtener historial de transacciones para las gráficas
-        tx_table = db.Table(os.environ.get("DYNAMODB_TABLE_TRANSACTIONS", "incomia-transactions-dev"))
-        # En una app real usaríamos Query con KeyConditionExpression. Para demo usamos Scan limitado.
-        tx_resp = tx_table.scan(
-            FilterExpression=boto3.dynamodb.conditions.Attr("userId").eq(user_id),
-            Limit=50 # Suficiente para mostrar tendencia reciente
-        )
-        transactions = tx_resp.get('Items', [])
-        
-        # Agrupar por mes para la gráfica (últimos 6 meses)
-        # Por simplicidad para la demo, mapeamos los últimos registros a puntos de gráfica
+        # 2. Generar historial para gráficas
+        salary = 0
+        fund = 0
+        if item:
+            salary = float(item.get("current_artificial_salary") or item.get("artificial_salary") or 0)
+            fund = float(item.get("stabilization_fund_balance") or 0)
+
+        # Intentar obtener transacciones reales
         history = []
         months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
         
-        # Tomamos una muestra de transacciones y las proyectamos
-        sorted_txs = sorted(transactions, key=lambda x: x.get('timestamp', ''), reverse=True)
-        for i, tx in enumerate(sorted_txs[:6]):
-            month_idx = (datetime.now().month - 1 - i) % 12
-            history.append({
-                "month": months[month_idx],
-                "realIncome": float(tx.get('amount', 0)),
-                "payout": float(tx.get('target_salary_at_time') or item.get('current_artificial_salary') if item else 3000)
-            })
-        
-        history.reverse() # Orden cronológico
+        try:
+            from boto3.dynamodb.conditions import Attr
+            tx_table = db.Table(os.environ.get("DYNAMODB_TABLE_TRANSACTIONS", "incomia-transactions-dev"))
+            tx_resp = tx_table.scan(
+                FilterExpression=Attr("userId").eq(user_id),
+                Limit=50
+            )
+            transactions = tx_resp.get('Items', [])
+            
+            if transactions:
+                sorted_txs = sorted(transactions, key=lambda x: x.get('timestamp', ''), reverse=True)
+                for i, tx in enumerate(sorted_txs[:6]):
+                    month_idx = (datetime.now().month - 1 - i) % 12
+                    real_amount = float(tx.get('amount', 0))
+                    payout_amount = float(tx.get('target_salary_at_time', salary)) if tx.get('target_salary_at_time') else salary
+                    history.append({
+                        "month": months[month_idx],
+                        "realIncome": abs(real_amount),
+                        "payout": payout_amount
+                    })
+                history.reverse()
+        except Exception as tx_err:
+            print(f"Error fetching transactions: {tx_err}")
+
+        # Si no hay historial real, generar datos de demostración basados en el salario
+        if not history and salary > 0:
+            import random
+            random.seed(42)  # Semilla fija para que se vean consistentes
+            for i in range(6):
+                month_idx = (datetime.now().month - 1 - (5 - i)) % 12
+                # Simular volatilidad freelance: variación de ±40% alrededor del salario
+                volatility = random.uniform(0.6, 1.4)
+                history.append({
+                    "month": months[month_idx],
+                    "realIncome": round(salary * volatility, 2),
+                    "payout": round(salary, 2)
+                })
 
         if not item:
-            # Fallback seguro
             return _response(200, {
                 "userId": user_id,
                 "artificial_salary": 0,
@@ -64,11 +86,12 @@ def lambda_handler(event, context):
                 "history": history
             })
 
+        resilience = (fund / salary) if salary > 0 else 0
         return _response(200, {
             "userId": user_id,
-            "artificial_salary": float(item.get("current_artificial_salary") or item.get("artificial_salary") or 0),
-            "stabilization_fund": float(item.get("stabilization_fund_balance") or 0),
-            "resilience_indicator": float(item.get("stabilization_fund_balance", 0)) / float(item.get("current_artificial_salary", 1)) if float(item.get("current_artificial_salary", 0)) > 0 else 0,
+            "artificial_salary": salary,
+            "stabilization_fund": fund,
+            "resilience_indicator": resilience,
             "history": history
         })
     except Exception as e:
