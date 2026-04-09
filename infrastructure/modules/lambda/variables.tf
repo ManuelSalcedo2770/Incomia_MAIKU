@@ -22,5 +22,5 @@ variable "nessie_api_key" {
 variable "bedrock_model_id" {
   description = "Modelo de Bedrock a usar"
   type        = string
-  default     = "anthropic.claude-3-sonnet-20260229-v1:0"
+  default     = "amazon.nova-pro-v1:0"
 }

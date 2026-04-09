@@ -4,10 +4,38 @@
 # Cada función es independiente, escalable y de bajo costo.
 # =====================================================================
 
+# DATA SOURCES PARA EMPAQUETAR EL CÓDIGO
+data "archive_file" "income_processor" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../backend"
+  output_path = "${path.module}/income_processor.zip"
+  excludes    = ["Dockerfile", "incomia.db", "__pycache__", "db", "models", "routes", "main.py"]
+}
+
+data "archive_file" "smoothing_engine" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../backend"
+  output_path = "${path.module}/smoothing_engine.zip"
+  excludes    = ["Dockerfile", "incomia.db", "__pycache__", "db", "models", "routes", "main.py"]
+}
+
+data "archive_file" "prediction_engine" {
+  type        = "zip"
+  source_file = "${path.module}/../../../AI/liquidity_forecast.py"
+  output_path = "${path.module}/prediction_engine.zip"
+}
+
+data "archive_file" "advice_generator" {
+  type        = "zip"
+  source_file = "${path.module}/../../../AI/advice_generator.py"
+  output_path = "${path.module}/advice_generator.zip"
+}
+
 # 1. FUNCIÓN: PROCESADOR DE INGRESOS (POST /income, GET /income)
 resource "aws_lambda_function" "income_processor" {
-  filename      = "income_processor.zip"
-  function_name = "${var.project_name}-income-processor-${var.env}"
+  filename         = data.archive_file.income_processor.output_path
+  source_code_hash = data.archive_file.income_processor.output_base64sha256
+  function_name    = "${var.project_name}-income-processor-${var.env}"
   role          = var.lambda_role_arn
   handler       = "income_handler.lambda_handler"
   runtime       = "python3.11"
@@ -25,8 +53,9 @@ resource "aws_lambda_function" "income_processor" {
 
 # 2. FUNCIÓN: MOTOR DE SMOOTHING (GET /smoothing)
 resource "aws_lambda_function" "smoothing_engine" {
-  filename      = "smoothing_engine.zip"
-  function_name = "${var.project_name}-smoothing-engine-${var.env}"
+  filename         = data.archive_file.smoothing_engine.output_path
+  source_code_hash = data.archive_file.smoothing_engine.output_base64sha256
+  function_name    = "${var.project_name}-smoothing-engine-${var.env}"
   role          = var.lambda_role_arn
   handler       = "smoothing_handler.lambda_handler"
   runtime       = "python3.11"
@@ -42,8 +71,9 @@ resource "aws_lambda_function" "smoothing_engine" {
 
 # 3. FUNCIÓN: PRONÓSTICO DE LIQUIDEZ (GET /predictions)
 resource "aws_lambda_function" "prediction_engine" {
-  filename      = "prediction_engine.zip"
-  function_name = "${var.project_name}-prediction-engine-${var.env}"
+  filename         = data.archive_file.prediction_engine.output_path
+  source_code_hash = data.archive_file.prediction_engine.output_base64sha256
+  function_name    = "${var.project_name}-prediction-engine-${var.env}"
   role          = var.lambda_role_arn
   handler       = "liquidity_forecast.lambda_handler"
   runtime       = "python3.11"
@@ -60,8 +90,9 @@ resource "aws_lambda_function" "prediction_engine" {
 
 # 4. FUNCIÓN: ASESOR IA (GET /advice)
 resource "aws_lambda_function" "advice_generator" {
-  filename      = "advice_generator.zip"
-  function_name = "${var.project_name}-advice-generator-${var.env}"
+  filename         = data.archive_file.advice_generator.output_path
+  source_code_hash = data.archive_file.advice_generator.output_base64sha256
+  function_name    = "${var.project_name}-advice-generator-${var.env}"
   role          = var.lambda_role_arn
   handler       = "advice_generator.lambda_handler"
   runtime       = "python3.11"
